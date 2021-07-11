@@ -158,6 +158,69 @@ class ImgRetrieval:
         std = df[col].std()
         df[col] = df[col].apply(lambda x: (x-mean)/std)
 
+    def find_images(self, query_embs, coe_ls, max_n=1):
+
+        df = pd.DataFrame(self.emb_score(query_embs))
+
+        # normal
+        for i in range(1, 7):
+            self.normalize_col(df, i)
+
+        # total score
+        df['score'] = df.apply(lambda x: self.total_score(x, coe_ls), axis=1)
+        
+        return df.nlargest(max_n, 'score')[0].to_list()
+
+class ImgRetrieval_MovieChar:
+
+    def __init__(self):
+        self.face_emb = np.load('emb_movie/face_emb.npy', allow_pickle=True)
+        self.num_char = len(self.face_emb)
+        self.dic_list_vgg = []
+
+    def get_emb_dic(self, emb):
+        dic = {}
+        for ele in emb:
+            dic[ele[0]] = ele[1]
+        return dic
+
+    def load_dic(self):
+        face_dic = self.get_emb_dic(self.face_emb)
+
+        emotion_dic = self.get_emb_dic(np.load('emb_movie/emotion_emb.npy', allow_pickle=True))
+        age_dic = self.get_emb_dic(np.load('emb_movie/age_emb.npy', allow_pickle=True))
+        gender_dic = self.get_emb_dic(np.load('emb_movie/gender_emb.npy', allow_pickle=True))
+        race_dic = self.get_emb_dic(np.load('emb_movie/race_emb.npy', allow_pickle=True))
+
+        hair_vgg_dic = self.get_emb_dic(np.load('emb_movie/vgg_hair_emb.npy', allow_pickle=True))
+
+        self.dic_list_vgg = [face_dic, emotion_dic, age_dic, gender_dic, race_dic, hair_vgg_dic]
+
+    def cos_sim(self, query_emb, img, dic):
+        return dot(query_emb, dic[img])/(norm(query_emb)*norm(dic[img]))
+
+    def emb_score(self, query_embs):
+        all_emb_sc = []
+        for i in range(self.num_char):
+            img = self.face_emb[i][0]
+            row = [img]
+            for j in range(6):
+                row.append(self.cos_sim(query_embs[j], img, self.dic_list_vgg[j]))
+            all_emb_sc.append(row)
+        
+        return all_emb_sc
+
+    def total_score(self, row, coe_ls):
+        sc = 0
+        for i in range(len(coe_ls)):
+            sc += coe_ls[i] * row[i+1]
+        return sc
+
+    def normalize_col(self, df, col):
+        mean = df[col].mean()
+        std = df[col].std()
+        df[col] = df[col].apply(lambda x: (x-mean)/std)
+
     def find_images(self, query_embs, coe_ls, max_n=5):
 
         df = pd.DataFrame(self.emb_score(query_embs))
@@ -203,20 +266,32 @@ print('ImgRetrieval')
 imgRe = ImgRetrieval()
 imgRe.load_dic()
 
-print('ScriptGPT')
-script = ScriptGPT()
+charRe = ImgRetrieval_MovieChar()
+charRe.load_dic()
+
+# print('ScriptGPT')
+# script = ScriptGPT()
 
 print('--------------')
 
-'''
+
 query_embs = face.get_face_emb('shots/test.jpg')
 hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
 query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
 
 coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
-results = imgRe.find_images(query_embs, coe_ls, max_n=5)
+results = charRe.find_images(query_embs, coe_ls)
 
+fig, axs = plt.subplots(1, 6, figsize=(15, 9))
+im = plt.imread('shots/test.jpg')
+axs[0].imshow(im)
+for i in range(5):
+    im = plt.imread('static/movie_char/' + results[i])
+    axs[i+1].imshow(im)
 
+plt.show()
+
+'''
 fn = results[0]
 # inputs = sum_tokenizer(imgRe.f2t_dic[fn], add_special_tokens=False, return_tensors='pt')
 input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
@@ -229,7 +304,7 @@ result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2,
 print('.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.')
 '''
 
-
+'''
 from flask import Flask, render_template, Response, request
 from threading import Thread
 
@@ -340,3 +415,4 @@ if __name__ == '__main__':
     
 camera.release()
 cv2.destroyAllWindows()    
+'''
