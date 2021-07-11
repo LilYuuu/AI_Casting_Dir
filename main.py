@@ -26,6 +26,11 @@ import tensorflow as tf
 from numpy import dot
 from numpy.linalg import norm
 
+import random
+import torch
+from transformers import AutoConfig, AutoTokenizer
+from transformers import AutoModelForCausalLM
+
 
 class DeepFace:
 
@@ -166,6 +171,26 @@ class ImgRetrieval:
         
         return df.nlargest(max_n, 'score')[0].to_list()
 
+class ScriptGPT:
+
+    def __init__(self):
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+        seed = 42
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+
+        self.sum_config = AutoConfig.from_pretrained('gpt2_model/')
+        
+        self.sum_tokenizer = AutoTokenizer.from_pretrained('gpt2_model/')
+        self.sum_tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+        self.sum_tokenizer.add_special_tokens({'sep_token': '[SEP]'})
+        self.sum_tokenizer.model_max_length = 256
+
+        self.gpt2_movie = AutoModelForCausalLM.from_pretrained('gpt2_model/')
+        self.gpt2_movie.to(self.device)
 
 print(datetime.datetime.now())
 print('DeepFace')
@@ -178,6 +203,9 @@ print('ImgRetrieval')
 imgRe = ImgRetrieval()
 imgRe.load_dic()
 
+print('ScriptGPT')
+script = ScriptGPT()
+
 print('--------------')
 
 query_embs = face.get_face_emb('shots/test.jpg')
@@ -186,4 +214,15 @@ query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
 
 coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
 results = imgRe.find_images(query_embs, coe_ls, max_n=5)
-print(results)
+
+
+fn = results[0]
+# inputs = sum_tokenizer(imgRe.f2t_dic[fn], add_special_tokens=False, return_tensors='pt')
+input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
+inputs = script.sum_tokenizer(input_1st_sent, add_special_tokens=False, return_tensors='pt')
+
+input_ids = inputs.input_ids.to(script.device)
+bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.", "INT.", "CONT'D", "CUT"]]
+forced_eos_token_id = script.sum_tokenizer('.').input_ids
+result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
+print('.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.')
