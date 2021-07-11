@@ -208,6 +208,7 @@ script = ScriptGPT()
 
 print('--------------')
 
+'''
 query_embs = face.get_face_emb('shots/test.jpg')
 hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
 query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
@@ -226,3 +227,116 @@ bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.
 forced_eos_token_id = script.sum_tokenizer('.').input_ids
 result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
 print('.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.')
+'''
+
+
+from flask import Flask, render_template, Response, request
+from threading import Thread
+
+global capture,rec_frame, switch, out 
+capture=0
+switch=1
+
+global msg
+msg = None
+
+
+#instatiate flask app  
+app = Flask(__name__, template_folder='./templates')
+
+camera = cv2.VideoCapture(0)
+
+def crop(frame):
+    w = 178*3
+    h = 218*3
+    startX = int((1280-w)/2)
+    endX = int(startX+w)
+    startY = int((720-h)/2)
+    endY = int(startY+h)
+    try:
+        # frame = cv2.rectangle(frame, (startX, startY), (endX, endY), (255,255,255), 2)
+        frame=frame[startY:endY, startX:endX]
+    except Exception as e:
+        pass
+    return frame
+
+def gen_frames():  # generate frame by frame from camera
+    global out, capture,rec_frame
+    while True:
+        success, frame = camera.read() 
+        if success:              
+            frame= crop(frame)
+
+            if(capture):
+                capture=0
+                print(datetime.datetime.now())
+                # p = os.path.sep.join(['shots', "shot_{}.jpg".format(str(now).replace(":",''))])
+                p = 'shots/test.jpg'
+                resize_frame=cv2.resize(frame, (178, 218))
+                cv2.imwrite(p, resize_frame)
+                
+            try:
+                ret, buffer = cv2.imencode('.jpg', cv2.flip(frame,1))
+                frame = buffer.tobytes()
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            except Exception as e:
+                pass
+                
+        else:
+            pass
+
+
+@app.route('/')
+def index():
+    msg = None
+    return render_template('index.html', msg=msg)
+    
+    
+@app.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+
+@app.route('/requests',methods=['POST','GET'])
+def tasks():
+    global switch,camera,msg
+    if request.method == 'POST':
+        if request.form.get('click') == 'Capture':
+            global capture
+            capture=1
+            msg='Captured'  
+        elif request.form.get('ml') == 'RunML':
+            print(datetime.datetime.now())
+            print('RunML')
+            query_embs = face.get_face_emb('shots/test.jpg')
+            hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
+            query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
+
+            coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
+            results = imgRe.find_images(query_embs, coe_ls, max_n=5)
+
+            print(datetime.datetime.now())
+            fn = results[0]
+            input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
+            inputs = script.sum_tokenizer(input_1st_sent, add_special_tokens=False, return_tensors='pt')
+
+            input_ids = inputs.input_ids.to(script.device)
+            bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.", "INT.", "CONT'D", "CUT"]]
+            forced_eos_token_id = script.sum_tokenizer('.').input_ids
+
+            print(datetime.datetime.now())
+            result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
+            
+            msg = '.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.'
+
+                 
+    elif request.method=='GET':
+        return render_template('index.html', msg=msg)
+    return render_template('index.html', msg=msg)
+
+
+if __name__ == '__main__':
+    app.run()
+    
+camera.release()
+cv2.destroyAllWindows()    
