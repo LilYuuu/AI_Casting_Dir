@@ -1,32 +1,89 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<style>
+		figure {
+			float: left;
+			text-align: center;
+		}
+
+		p {
+			padding: 20px;
+			float: left;
+		}
+
+		.char{
+			clear: both;
+		}
+
+	</style>
+</head>
 
 <body>
-<div class="container">
-    <div class="row">
-        <div class="col-lg-8  offset-lg-2">
+	<div class="container">
+		<div class="row">
+			<div class="col-lg-8  offset-lg-2">
 
-			
-            <h2 class="mt-5">AI Casting Director</h2>
-			<form method="post" action="{{ url_for('tasks') }}">
-			<!-- <input type="submit" value="Stop/Start" name="stop" /> -->
-			<input type="submit" value="Capture" name="click"/>
-			<input type="submit" value="RunML" name="ml"/>
-			</form>
-            <img src="{{ url_for('video_feed') }}" height="80%">
 
-			{% if msg %}
-			<p><strong>{{msg}}</strong></p>
-			{% endif %}
+				<h2 class="mt-5">AI Casting Director</h2>
+				<form method="post" action="{{ url_for('tasks') }}">
+					<input type="submit" value="Capture" name="click" />
+					<input type="submit" value="RunML" name="ml" />
+				</form>
+				<figure><img src="{{ url_for('video_feed') }}" height="80%"></figure>
 
-			<!-- <h3 style="font-family:courier;">Instructions:</h3>
-			<ol style="font-family:courier;">
-			<li>Stop/Start--Toggle between stop or start live streaming</li>
-			<li>Capture--Take still-shot and save in the 'shots' directory</li>
-			<li>Grey--Toggle between grayscale and RGB output</li>
-			<li>Negative--Toggle between negative and RGB output</li>
-			<li>Face Only--Shows just your face if present(Toggle on/off)</li> 
-			<li>Start/Stop Recording--Toggle between starting and stopping video recording</li>	 -->
-			
-        </div>
-    </div>
-</div>
+				{% if msg %}
+				<p><strong>
+					{% autoescape false %}
+					{{msg}}
+					{% endautoescape %}
+				</strong></p>
+				{% endif %}
+
+				<br>
+				
+				{% if char_lst %}
+				<div class="char">
+					{% for i in range(5) %}
+						<figure >
+							<img src="{{ char_lst[i] }}">
+							<figcaption>{{ scores[i] }}</figcaption>
+						</figure>
+					{% endfor %}
+				</div>
+				{% endif %}
+
+				<!-- <figure><img src="../static/movie_char/466.jpg"></figure>
+
+				<p>hiiiiiii</p>
+
+				<div class='char'>
+					<figure>
+						<img src="../static/movie_char/35.jpg">
+						<figcaption>2.4345</figcaption>
+					</figure>
+					<figure>
+						<img src="../static/movie_char/8.jpg">
+						<figcaption>5.5681</figcaption>
+					</figure>
+					<figure>
+						<img src="../static/movie_char/46.jpg">
+						<figcaption>3.3245</figcaption>
+					</figure>
+				</div> -->
+
+
+				<!-- <h3 style="font-family:courier;">Instructions:</h3>
+				<ol style="font-family:courier;">
+				<li>Stop/Start--Toggle between stop or start live streaming</li>
+				<li>Capture--Take still-shot and save in the 'shots' directory</li>
+				<li>Grey--Toggle between grayscale and RGB output</li>
+				<li>Negative--Toggle between negative and RGB output</li>
+				<li>Face Only--Shows just your face if present(Toggle on/off)</li> 
+				<li>Start/Stop Recording--Toggle between starting and stopping video recording</li>	 -->
+
+			</div>
+		</div>
+	</div>
 </body>

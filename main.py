@@ -7,6 +7,8 @@ import shutil
 import datetime, time
 import os, sys
 
+from pandas.core.base import NoNewAttributesMixin
+
 # from deepface import DeepFace
 from deepface.commons import functions
 from deepface.basemodels import Facenet
@@ -232,7 +234,7 @@ class ImgRetrieval_MovieChar:
         # total score
         df['score'] = df.apply(lambda x: self.total_score(x, coe_ls), axis=1)
         
-        return df.nlargest(max_n, 'score')[0].to_list()
+        return df.nlargest(max_n, 'score')[0].to_list(), df.nlargest(max_n, 'score')['score'].to_list()
 
 class ScriptGPT:
 
@@ -269,27 +271,28 @@ imgRe.load_dic()
 charRe = ImgRetrieval_MovieChar()
 charRe.load_dic()
 
-# print('ScriptGPT')
-# script = ScriptGPT()
+print('ScriptGPT')
+script = ScriptGPT()
 
 print('--------------')
 
 
-query_embs = face.get_face_emb('shots/test.jpg')
-hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
-query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
+# query_embs = face.get_face_emb('shots/test.jpg')
+# hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
+# query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
 
-coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
-results = charRe.find_images(query_embs, coe_ls)
+# coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
+# results, scores = charRe.find_images(query_embs, coe_ls)
+# print(results)
 
-fig, axs = plt.subplots(1, 6, figsize=(15, 9))
-im = plt.imread('shots/test.jpg')
-axs[0].imshow(im)
-for i in range(5):
-    im = plt.imread('static/movie_char/' + results[i])
-    axs[i+1].imshow(im)
+# fig, axs = plt.subplots(1, 6, figsize=(15, 9))
+# im = plt.imread('shots/test.jpg')
+# axs[0].imshow(im)
+# for i in range(5):
+#     im = plt.imread('static/movie_char/' + results[i])
+#     axs[i+1].imshow(im)
 
-plt.show()
+# plt.show()
 
 '''
 fn = results[0]
@@ -304,16 +307,17 @@ result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2,
 print('.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.')
 '''
 
-'''
 from flask import Flask, render_template, Response, request
 from threading import Thread
 
-global capture,rec_frame, switch, out 
+global capture, rec_frame, switch, out 
 capture=0
 switch=1
 
-global msg
+global msg, char_lst, scores
 msg = None
+char_lst = None
+scores = None
 
 
 #instatiate flask app  
@@ -336,7 +340,7 @@ def crop(frame):
     return frame
 
 def gen_frames():  # generate frame by frame from camera
-    global out, capture,rec_frame
+    global out, capture, rec_frame
     while True:
         success, frame = camera.read() 
         if success:              
@@ -364,9 +368,8 @@ def gen_frames():  # generate frame by frame from camera
 
 @app.route('/')
 def index():
-    msg = None
-    return render_template('index.html', msg=msg)
-    
+    global msg, char_lst, scores
+    return render_template('index.html', msg=msg, char_lst=char_lst, scores=scores)
     
 @app.route('/video_feed')
 def video_feed():
@@ -374,23 +377,29 @@ def video_feed():
 
 @app.route('/requests',methods=['POST','GET'])
 def tasks():
-    global switch,camera,msg
+    global switch, camera, msg, char_lst, scores
     if request.method == 'POST':
         if request.form.get('click') == 'Capture':
             global capture
             capture=1
-            msg='Captured'  
+            msg='Captured' 
+            char_lst = None
+            scores = None
+
         elif request.form.get('ml') == 'RunML':
-            print(datetime.datetime.now())
+
             print('RunML')
             query_embs = face.get_face_emb('shots/test.jpg')
             hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
             query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
 
             coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
-            results = imgRe.find_images(query_embs, coe_ls, max_n=5)
+            results, scores = charRe.find_images(query_embs, coe_ls, max_n=5)
+            char_lst = ['/static/movie_char/' + fn for fn in results]
 
-            print(datetime.datetime.now())
+            coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
+            results = imgRe.find_images(query_embs, coe_ls)
+
             fn = results[0]
             input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
             inputs = script.sum_tokenizer(input_1st_sent, add_special_tokens=False, return_tensors='pt')
@@ -399,15 +408,16 @@ def tasks():
             bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.", "INT.", "CONT'D", "CUT"]]
             forced_eos_token_id = script.sum_tokenizer('.').input_ids
 
-            print(datetime.datetime.now())
             result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
             
             msg = '.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.'
+            msg = msg.replace('\n', '<br>')
+            return render_template('index.html', msg=msg, char_lst=char_lst, scores=scores)
 
                  
     elif request.method=='GET':
-        return render_template('index.html', msg=msg)
-    return render_template('index.html', msg=msg)
+        return render_template('index.html', msg=msg, char_lst=char_lst, scores=scores)
+    return render_template('index.html', msg=msg, char_lst=char_lst, scores=scores)
 
 
 if __name__ == '__main__':
@@ -415,4 +425,3 @@ if __name__ == '__main__':
     
 camera.release()
 cv2.destroyAllWindows()    
-'''
