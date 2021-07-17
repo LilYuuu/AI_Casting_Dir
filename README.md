@@ -1,6 +1,6 @@
 # AI_Casting_Dir
 
-Make sure you have python3 installed. If not, go to https://www.python.org/downloads/ and download the installer.
+Make sure you have python3 installed. If not, go to https://www.python.org/downloads/ and download the installer (.
 
 ## Step 1: Download files
 
