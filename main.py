@@ -326,11 +326,11 @@ app = Flask(__name__, template_folder='./templates')
 camera = cv2.VideoCapture(0)
 
 def crop(frame):
-    w = 178*3
-    h = 218*3
-    startX = int((1280-w)/2)
+    w = 178*2
+    h = 218*2
+    startX = int((frame.shape[1]-w)/2)
     endX = int(startX+w)
-    startY = int((720-h)/2)
+    startY = int((frame.shape[0]-h)/2)
     endY = int(startY+h)
     try:
         # frame = cv2.rectangle(frame, (startX, startY), (endX, endY), (255,255,255), 2)
