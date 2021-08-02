@@ -4,8 +4,10 @@
 <head>
 
 	<script src="../static/p5/p5.min.js"></script>
-    <script src="../static/js/sketch.js"></script>
+	<script src="../static/js/sketch_p5.js"></script>
 	<script src="../static/js/clmtrackr.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script src="../static/js/sketch_html.js"></script>
 
 	<style>
 		figure {
@@ -18,7 +20,7 @@
 			float: left;
 		}
 
-		.char{
+		#char {
 			clear: both;
 		}
 
@@ -27,75 +29,58 @@
 		}
 
 		#cv {
-			border:  none;
+			border: none;
 			height: 436px;
 			overflow: hidden;
 			width: 356px;
 		}
-
 	</style>
 </head>
 
 <body>
 	<div class="container">
-		<div class="row">
-			<div class="col-lg-8  offset-lg-2">
 
+		<h2 class="mt-5">AI Casting Director</h2>
 
-				<h2 class="mt-5">AI Casting Director</h2>
-				<form method="post" action="{{ url_for('tasks') }}">
-					<input type="submit" value="Capture" name="click" />
-					<input type="submit" value="RunML" name="ml" />
-				</form>
+		<form>
+			<a href=# id="capture_button">
+				<button type="button" style="background-color:none; border:none;">
+					<img src="../static/images/icon-camera-512.png" width="6%">
+				</button>
+			</a>
+		</form>
 
-				<figure><img id='hide' src="{{ url_for('video_feed') }}" height="50%"></figure>
+		<figure id='hide'><img src="{{ url_for('video_feed') }}" height="50%"></figure>
 
-				<figure>
-					<div id="cv"></div>
-					<!-- <iframe allow="camera" id="p5_embedded" src='https://preview.p5js.org/tigertian98/present/yzksiz4tc'></iframe> -->
-				</figure>
+		<figure>
+			<div id="cv"></div>
+			<!-- <iframe allow="camera" id="p5_embedded" src='https://preview.p5js.org/tigertian98/present/yzksiz4tc'></iframe> -->
+		</figure>
 
-				{% if msg %}
-				<p><strong>
-					{% autoescape false %}
-					{{msg}}
-					{% endautoescape %}
-				</strong></p>
-				{% endif %}
+		<p id="script" style="white-space: pre-line"><strong></strong></p>
 
-				<br>
-				
-				{% if char_lst %}
-				<div class="char">
-					{% for i in range(5) %}
-						<figure >
-							<img src="{{ char_lst[i] }}">
-							<figcaption>{{ scores[i] }}</figcaption>
-						</figure>
-					{% endfor %}
-				</div>
-				{% endif %} -->
+		<br>
 
-				<!-- <figure><img src="../static/movie_char/466.jpg"></figure>
+		<div id="char"></div>
 
-				<p>TEXT</p>
+		<!-- <figure><img src="../static/movie_char/466.jpg"></figure>
 
-				<div class='char'>
-					<figure>
-						<img src="../static/movie_char/35.jpg">
-						<figcaption>2.4345</figcaption>
-					</figure>
-					<figure>
-						<img src="../static/movie_char/8.jpg">
-						<figcaption>5.5681</figcaption>
-					</figure>
-					<figure>
-						<img src="../static/movie_char/46.jpg">
-						<figcaption>3.3245</figcaption>
-					</figure>
-				</div> -->
+		<p>TEXT</p>
 
-			</div>
-		</div>
+		<div class='char'>
+			<figure>
+				<img src="../static/movie_char/35.jpg">
+				<figcaption>2.4345</figcaption>
+			</figure>
+			<figure>
+				<img src="../static/movie_char/8.jpg">
+				<figcaption>5.5681</figcaption>
+			</figure>
+			<figure>
+				<img src="../static/movie_char/46.jpg">
+				<figcaption>3.3245</figcaption>
+			</figure>
+		</div> -->
+
 	</div>
 </body>

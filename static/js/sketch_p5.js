@@ -1,12 +1,40 @@
 let r, g, b, sw;
 let unitDist, radius;
 let w = 178*2, h = 218*2;
+let face_size = 200;
+let foa_offset = -30;
+let left_border, down_border, right_border, up_border;
 let up_m, dn_m, lf_m, rt_m;
 let pos_axis;
-let rec_w, rec_h22offset;
+let rec_w, rec_h;
+let offset;
 
 let numbers;
 let nums = [0, 0, 0, 0, 0];
+
+let icon_size = 30;
+
+let photo_taken = false;
+let photo;
+let face_of_another;
+let time_photo_taken;
+
+let interval = 40;
+let part_interval = interval // 3;
+let tint_checkpoints = [0, interval, interval * 2, interval * 3];
+let tint_r = [255, 255, 220, 150];
+let tint_g = [255, 150, 220, 150];
+let tint_b = [255, 150, 100, 220];
+let genres = ["ROMANCE", "HORROR", "SCI-FI"];
+
+let reset_face_tracking = false;
+
+function preload() {
+
+  face_of_another = loadImage("../static/images/face_of_another.gif");
+
+}
+
 
 function setup() {
   var theCanvas = createCanvas(w, h);
@@ -15,24 +43,137 @@ function setup() {
   setupFaceTracking();
   
   numbers = true;
+  
+  let button = document.getElementById("capture_button");
+
+  button.addEventListener("click", function() {
+    console.log('click');
+    photo_taken = true;
+    photo = capture.get(0, 0, w, h);
+    time_photo_taken = frameCount;
+  });
+  
 }
 
 
 function draw() {
   background(0);
+  // console.log(frameCount);
+  
+  // Take a photo
+  
+  if (!photo_taken) {
+    
+    updateFaceTracking();
+    displayFaceTracking();
+    
+    noFill();
+    stroke(255);
+    
+    up_border = (h - face_size) / 2;
+    down_border = (h + face_size) / 2;
+    left_border = (w - face_size) / 2;
+    right_border = (w + face_size) / 2;
+    
+    rect(left_border, up_border, face_size, face_size);
+    
+    if (mouseX < icon_size && mouseY < icon_size && mouseIsPressed) {
+    
+      console.log("Take a photo");
+      photo_taken = true;
+      photo = capture.get(0, 0, 225, 400);
+      time_photo_taken = frameCount;
+      // console.log(time_photo_taken);
 
-  updateFaceTracking();
-  displayFaceTracking();
+      // photo.save("Screenshot", "jpg");
+    }
+
+  } else {
+    
+//     if (mouseX > w - icon_size && mouseX < w && mouseY > h - icon_size && mouseY < h && mouseIsPressed) {
+    
+//       console.log("Re-take the photo");
+//       photo_taken = false;
+
+//     }
+    
+    image(photo, 0, 0);
+    
+    if (frameCount < time_photo_taken + interval * genres.length) {
+      
+      // Stage two - Genre Switching
+      
+      imageMode(CENTER);
+      tint(255, 180);
+      image(face_of_another, w / 2, h / 2 + foa_offset, 200, 263);
+      tint(255);
+      imageMode(CORNER);
+      
+      let phase_num = 0;
+      
+      for (let i = 0; i < tint_checkpoints.length; i ++) {
+        let current_time = frameCount - time_photo_taken;
+        if (current_time < tint_checkpoints[i]) {
+          
+          let r_dif = tint_r[i] - tint_r[i - 1];
+          let g_dif = tint_g[i] - tint_g[i - 1];
+          let b_dif = tint_b[i] - tint_b[i - 1];
+          let phase_percentage = (current_time - tint_checkpoints[i - 1]) / (tint_checkpoints[i] - tint_checkpoints[i - 1]);
+          
+          let new_tint_r = tint_r[i - 1] + r_dif * phase_percentage;
+          let new_tint_g = tint_g[i - 1] + g_dif * phase_percentage;
+          let new_tint_b = tint_b[i - 1] + b_dif * phase_percentage;
+          
+          tint(new_tint_r, new_tint_g, new_tint_b);
+          
+          if (current_time > tint_checkpoints[i] - part_interval && current_time < tint_checkpoints[i] + part_interval) {
+              
+            textAlign(CENTER);
+            noStroke();
+            fill(255, 127 - abs(phase_percentage * 255 - 127));
+            text(genres[i - 1], 112, 350);
+            
+          }
+          
+          break;
+          
+        }
+      }
+    } else {
+      
+      // Stage three - Feature Listing
+      
+      tint(255);
+      if (!reset_face_tracking) {
+        setupFaceTracking();
+        updateFaceTracking();
+        reset_face_tracking = true;
+      }
+      
+      noStroke();
+      fill(255, 200);
+      text("Big Right Eye", fPositions[26].x, fPositions[26].y);
+      text("Small Left Eye", fPositions[31].x, fPositions[31].y);
+      text("Round Nose", fPositions[62].x, fPositions[62].y);
+      text("Red Lips", fPositions[57].x, fPositions[57].y);
+      
+      
+      
+       
+      
+    }
+  }
+
   
   // Face tracking pattern
 
-  if (fPositions.length > 0) {
+  if (fPositions.length > 0 && !photo_taken) {
     // if there is more than one face!
     
     r = 255;
     g = 255;
     b = 255;
-    sw = 2;
+    sw = 1;
     
     //Face
     
@@ -173,6 +314,12 @@ function draw() {
     
     noFill();
     stroke(255);
+    
+    if (lf_m > left_border && rt_m < right_border && up_m > up_border && dn_m < down_border) {
+      stroke(255)
+    } else {
+      stroke(255, 0, 0);
+    }
     rect(lf_m, up_m, rec_w, rec_h);
     
     
@@ -180,13 +327,13 @@ function draw() {
     
     if (numbers) {
       
-      nums[0] = distByIndex(23, 25);
-      nums[1] = distByIndex(28, 30);
-      nums[2] = distByIndex(35, 39);
-      nums[3] = distByIndex(44, 50);
-      nums[4] = distByIndex(2, 12);
+      nums[0] = floor(distByIndex(23, 25));
+      nums[1] = floor(distByIndex(28, 30));
+      nums[2] = floor(distByIndex(35, 39));
+      nums[3] = floor(distByIndex(44, 50));
+      nums[4] = floor(distByIndex(2, 12));
       
-      fill(255, 150);
+      fill(255, 100);
       noStroke();
       textAlign(CENTER);
       
@@ -250,6 +397,7 @@ var tracker;
 let fPositions = [];
 
 function setupFaceTracking() {
+  
   capture = createCapture({
     audio: false,
     video: {
@@ -263,6 +411,24 @@ function setupFaceTracking() {
   //createCanvas(w, h);
   capture.size(w, h);
   capture.hide();
+  
+  // if (!photo_taken) {
+  //   capture = createCapture({
+  //     audio: false,
+  //     video: {
+  //       width: w,
+  //       height: h
+  //     }
+  //   }, function() {
+  //     console.log('capture ready.')
+  //   });
+  //   capture.elt.setAttribute('playsinline', '');
+  //   //createCanvas(w, h);
+  //   capture.size(w, h);
+  //   capture.hide();
+  // } else {
+  //   capture = photo;
+  // }
 
   tracker = new clm.tracker();
   tracker.init();
@@ -317,6 +483,7 @@ function displayFaceTracking() {
   
   pop();
 }
+
 
 
 class FacePosition {

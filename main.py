@@ -9,7 +9,6 @@ import os, sys
 
 from pandas.core.base import NoNewAttributesMixin
 
-# from deepface import DeepFace
 from deepface.commons import functions
 from deepface.basemodels import Facenet
 
@@ -33,6 +32,12 @@ import torch
 from transformers import AutoConfig, AutoTokenizer
 from transformers import AutoModelForCausalLM
 
+from flask import Flask, render_template, Response, jsonify
+
+
+####################################
+############# ML MODELS ############
+####################################
 
 class DeepFace:
 
@@ -257,73 +262,10 @@ class ScriptGPT:
         self.gpt2_movie = AutoModelForCausalLM.from_pretrained('gpt2_model/')
         self.gpt2_movie.to(self.device)
 
-print(datetime.datetime.now())
-print('DeepFace')
-face = DeepFace()
 
-print('HairSeg')
-hair = HairSeg()
-
-print('ImgRetrieval')
-imgRe = ImgRetrieval()
-imgRe.load_dic()
-
-charRe = ImgRetrieval_MovieChar()
-charRe.load_dic()
-
-print('ScriptGPT')
-script = ScriptGPT()
-
-print('--------------')
-
-
-# query_embs = face.get_face_emb('shots/test.jpg')
-# hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
-# query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
-
-# coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
-# results, scores = charRe.find_images(query_embs, coe_ls)
-# print(results)
-
-# fig, axs = plt.subplots(1, 6, figsize=(15, 9))
-# im = plt.imread('shots/test.jpg')
-# axs[0].imshow(im)
-# for i in range(5):
-#     im = plt.imread('static/movie_char/' + results[i])
-#     axs[i+1].imshow(im)
-
-# plt.show()
-
-'''
-fn = results[0]
-# inputs = sum_tokenizer(imgRe.f2t_dic[fn], add_special_tokens=False, return_tensors='pt')
-input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
-inputs = script.sum_tokenizer(input_1st_sent, add_special_tokens=False, return_tensors='pt')
-
-input_ids = inputs.input_ids.to(script.device)
-bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.", "INT.", "CONT'D", "CUT"]]
-forced_eos_token_id = script.sum_tokenizer('.').input_ids
-result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
-print('.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.')
-'''
-
-from flask import Flask, render_template, Response, request
-from threading import Thread
-
-global capture, rec_frame, switch, out 
-capture=0
-switch=1
-
-global msg, char_lst, scores
-msg = None
-char_lst = None
-scores = None
-
-
-#instatiate flask app  
-app = Flask(__name__, template_folder='./templates')
-
-camera = cv2.VideoCapture(0)
+####################################
+############### FLASK ##############
+####################################
 
 def crop(frame):
     w = 178*2
@@ -340,7 +282,7 @@ def crop(frame):
     return frame
 
 def gen_frames():  # generate frame by frame from camera
-    global out, capture, rec_frame
+    global capture
     while True:
         success, frame = camera.read() 
         if success:              
@@ -366,58 +308,125 @@ def gen_frames():  # generate frame by frame from camera
             pass
 
 
+
+'''
+face = DeepFace()
+
+hair = HairSeg()
+
+imgRe = ImgRetrieval()
+imgRe.load_dic()
+
+charRe = ImgRetrieval_MovieChar()
+charRe.load_dic()
+
+script = ScriptGPT()
+
+query_embs = face.get_face_emb('shots/test.jpg')
+hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
+query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
+
+coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
+results, scores = charRe.find_images(query_embs, coe_ls)
+print(results)
+
+fig, axs = plt.subplots(1, 6, figsize=(15, 9))
+im = plt.imread('shots/test.jpg')
+axs[0].imshow(im)
+for i in range(5):
+    im = plt.imread('static/movie_char/' + results[i])
+    axs[i+1].imshow(im)
+
+plt.show()
+
+fn = results[0]
+# inputs = sum_tokenizer(imgRe.f2t_dic[fn], add_special_tokens=False, return_tensors='pt')
+input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
+inputs = script.sum_tokenizer(input_1st_sent, add_special_tokens=False, return_tensors='pt')
+
+input_ids = inputs.input_ids.to(script.device)
+bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.", "INT.", "CONT'D", "CUT"]]
+forced_eos_token_id = script.sum_tokenizer('.').input_ids
+result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
+print('.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.')
+'''
+
+
+############ PRELOAD MODELS ###########
+
+print(datetime.datetime.now())
+print('DeepFace')
+face = DeepFace()
+
+print('HairSeg')
+hair = HairSeg()
+
+print('ImgRetrieval')
+imgRe = ImgRetrieval()
+imgRe.load_dic()
+
+charRe = ImgRetrieval_MovieChar()
+charRe.load_dic()
+
+print('ScriptGPT')
+script = ScriptGPT()
+
+print('--------------')
+
+############### FLASK ##############
+
+global capture 
+capture=0
+
+#instatiate flask app  
+app = Flask(__name__, template_folder='./templates')
+camera = cv2.VideoCapture(0)
+
 @app.route('/')
 def index():
-    global msg, char_lst, scores
-    return render_template('index.html', msg=msg, char_lst=char_lst, scores=scores)
+    return render_template('index.html')
     
 @app.route('/video_feed')
 def video_feed():
     return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-@app.route('/requests',methods=['POST','GET'])
-def tasks():
-    global switch, camera, msg, char_lst, scores
-    if request.method == 'POST':
-        if request.form.get('click') == 'Capture':
-            global capture
-            capture=1
-            msg='Captured' 
-            char_lst = None
-            scores = None
+# background process happening without any refreshing
+@app.route('/background_process')
+def background_process():
 
-        elif request.form.get('ml') == 'RunML':
+    # TAKE A PHOTO
+    global capture
+    capture=1
 
-            print('RunML')
-            query_embs = face.get_face_emb('shots/test.jpg')
-            hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
-            query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
+    # MACHINE LEARNING
+    
+    # image retrieval
+    query_embs = face.get_face_emb('shots/test.jpg')
+    hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
+    query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
 
-            coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
-            results, scores = charRe.find_images(query_embs, coe_ls, max_n=5)
-            char_lst = ['/static/movie_char/' + fn for fn in results]
+    coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
+    results, scores = charRe.find_images(query_embs, coe_ls, max_n=5)
+    char_lst = ['/static/movie_char/' + fn for fn in results]
 
-            coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
-            results = imgRe.find_images(query_embs, coe_ls)
+    coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
+    results = imgRe.find_images(query_embs, coe_ls)
 
-            fn = results[0]
-            input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
-            inputs = script.sum_tokenizer(input_1st_sent, add_special_tokens=False, return_tensors='pt')
+    # gpt2
+    fn = results[0]
+    input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
+    inputs = script.sum_tokenizer(input_1st_sent, add_special_tokens=False, return_tensors='pt')
 
-            input_ids = inputs.input_ids.to(script.device)
-            bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.", "INT.", "CONT'D", "CUT"]]
-            forced_eos_token_id = script.sum_tokenizer('.').input_ids
+    input_ids = inputs.input_ids.to(script.device)
+    bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.", "INT.", "CONT'D", "CUT"]]
+    forced_eos_token_id = script.sum_tokenizer('.').input_ids
 
-            result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
-            
-            msg = '.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.'
-            msg = msg.replace('\n', '<br>')
-            return render_template('index.html', msg=msg, char_lst=char_lst, scores=scores)
+    result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
+    
+    msg = '.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.'
 
-                 
-    elif request.method=='GET':
-        return render_template('index.html', msg=msg, char_lst=char_lst, scores=scores)
-    return render_template('index.html', msg=msg, char_lst=char_lst, scores=scores)
+    # send results to html as json file
+    return jsonify(msg=msg, char_lst=char_lst, scores=scores)
 
 
 if __name__ == '__main__':
