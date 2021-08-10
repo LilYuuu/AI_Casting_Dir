@@ -1,8 +1,13 @@
-let r, g, b, sw;
+let r, g, b, opacity, sw, rad;
 let unitDist, radius;
-let w = 178*2, h = 218*2;
-let face_size = 200;
+let w = 178 * 2, h = 218 * 2;
+let face_size = 300;
 let foa_offset = -30;
+let foa_ratio = 1453/1909;
+let foa_w = 270;
+let foa_h = foa_w / foa_ratio;
+let genre_text_offset = 50;
+let feature_text_offset = 15;
 let left_border, down_border, right_border, up_border;
 let up_m, dn_m, lf_m, rt_m;
 let pos_axis;
@@ -21,13 +26,22 @@ let time_photo_taken;
 
 let interval = 40;
 let part_interval = interval // 3;
-let tint_checkpoints = [0, interval, interval * 2, interval * 3];
-let tint_r = [255, 255, 220, 150];
-let tint_g = [255, 150, 220, 150];
-let tint_b = [255, 150, 100, 220];
-let genres = ["ROMANCE", "HORROR", "SCI-FI"];
+let tint_checkpoints = [0, interval, interval * 2, interval * 3, interval * 4];
+let tint_r = [255, 255, 220, 150, 255];
+let tint_g = [255, 150, 220, 150, 100];
+let tint_b = [255, 150, 100, 220, 100];
+let genres = ["ROMANCE", "HORROR", "SCI-FI", "ACTION"];
+
+let eye_type = ["Upturned", "Downturned", "Almond", "Round"];
+let nose_type = ["Hooked", "Roman", "Button", "Funnel"];
+let mouth_type = ["Wide", "Thin", "Heart-shaped", "Full"];
 
 let reset_face_tracking = false;
+
+let stage_3_start_time = 0;
+let stage_3_started = false;
+let stage_3_interval = 40;
+let rand_eye, rand_nose, rand_mouth;
 
 function preload() {
 
@@ -39,11 +53,11 @@ function preload() {
 function setup() {
   var theCanvas = createCanvas(w, h);
   theCanvas.parent("#cv");
-
+  
   setupFaceTracking();
   
   numbers = true;
-  
+
   let button = document.getElementById("capture_button");
 
   button.addEventListener("click", function() {
@@ -52,6 +66,10 @@ function setup() {
     photo = capture.get(0, 0, w, h);
     time_photo_taken = frameCount;
   });
+  
+  rand_eye = random(eye_type);
+  rand_nose = random(nose_type);
+  rand_mouth = random(mouth_type);
   
 }
 
@@ -77,16 +95,15 @@ function draw() {
     
     rect(left_border, up_border, face_size, face_size);
     
-    if (mouseX < icon_size && mouseY < icon_size && mouseIsPressed) {
+    // if (mouseX < icon_size && mouseY < icon_size && mouseIsPressed) {
     
-      console.log("Take a photo");
-      photo_taken = true;
-      photo = capture.get(0, 0, 225, 400);
-      time_photo_taken = frameCount;
-      // console.log(time_photo_taken);
+    //   console.log("Take a photo");
+    //   photo_taken = true;
+    //   photo = capture.get(0, 0, w, h);
+    //   time_photo_taken = frameCount;
 
-      // photo.save("Screenshot", "jpg");
-    }
+    //   // photo.save("Screenshot", "jpg");
+    // }
 
   } else {
     
@@ -105,7 +122,7 @@ function draw() {
       
       imageMode(CENTER);
       tint(255, 180);
-      image(face_of_another, w / 2, h / 2 + foa_offset, 200, 263);
+      image(face_of_another, w / 2, h / 2 + foa_offset, foa_w, foa_h);
       tint(255);
       imageMode(CORNER);
       
@@ -131,7 +148,7 @@ function draw() {
             textAlign(CENTER);
             noStroke();
             fill(255, 127 - abs(phase_percentage * 255 - 127));
-            text(genres[i - 1], 112, 350);
+            text(genres[i - 1], w / 2, h - genre_text_offset);
             
           }
           
@@ -143,6 +160,14 @@ function draw() {
       
       // Stage three - Feature Listing
       
+      if (!stage_3_started) {
+        stage_3_start_time = frameCount;
+        stage_3_started = true;
+        
+        console.log(stage_3_start_time);
+
+      }
+      
       tint(255);
       if (!reset_face_tracking) {
         setupFaceTracking();
@@ -150,17 +175,55 @@ function draw() {
         reset_face_tracking = true;
       }
       
+      r = 255;
+      g = 255;
+      b = 255;
+      opacity = 100;
+      sw = 1;
+      rad = 15;
+      
+      linkTwoDots(27, 32, r, g, b, opacity, sw);
+      linkTwoDots(44, 27, r, g, b, opacity, sw);
+      linkTwoDots(50, 32, r, g, b, opacity, sw);
+      linkTwoDots(44, 50, r, g, b, opacity, sw);
+      linkTwoDots(27, 62, r, g, b, opacity, sw);
+      linkTwoDots(32, 62, r, g, b, opacity, sw);
+      
+      drawEllipse(27, r, g, b, opacity, rad);
+      drawEllipse(32, r, g, b, opacity, rad);
+      drawEllipse(44, r, g, b, opacity, rad);
+      drawEllipse(50, r, g, b, opacity, rad);
+      drawEllipse(62, r, g, b, opacity, rad);
+
+      
       noStroke();
       fill(255, 200);
-      text("Big Right Eye", fPositions[26].x, fPositions[26].y);
-      text("Small Left Eye", fPositions[31].x, fPositions[31].y);
-      text("Round Nose", fPositions[62].x, fPositions[62].y);
-      text("Red Lips", fPositions[57].x, fPositions[57].y);
+      textAlign(RIGHT);
       
       
+      if (stage_3_start_time + stage_3_interval * 1 < frameCount) {
+        if (stage_3_start_time + stage_3_interval * 1.5 > frameCount) {
+          text(eye_type[frameCount % eye_type.length] + " Eyes", w - feature_text_offset, fPositions[26].y);
+        } else {
+          text(rand_eye + " Eyes", w - feature_text_offset, fPositions[26].y);
+        }
+      }
       
-       
+      if (stage_3_start_time + stage_3_interval * 2 < frameCount) {
+        if (stage_3_start_time + stage_3_interval * 2.5 > frameCount) {
+          text(nose_type[frameCount % nose_type.length] + " Nose", w - feature_text_offset, fPositions[62].y);
+        } else {
+          text(rand_nose + " Nose", w - feature_text_offset, fPositions[62].y);
+        }
+      }
       
+      if (stage_3_start_time + stage_3_interval * 3 < frameCount) {
+        if (stage_3_start_time + stage_3_interval * 3.5 > frameCount) {
+          text(mouth_type[frameCount % mouth_type.length] + " Lips", w - feature_text_offset, fPositions[50].y);
+        } else {
+          text(rand_mouth + " Lips", w - feature_text_offset, fPositions[50].y);
+        }
+      }
     }
   }
 
@@ -173,95 +236,96 @@ function draw() {
     r = 255;
     g = 255;
     b = 255;
+    opacity = 200;
     sw = 1;
     
     //Face
     
-    linkConsecDots(0, 18, r, g, b, sw);
-    linkConsecDots(19, 22, r, g, b, sw);
-    linkTwoDots(0, 19, r, g, b, sw);
-    linkTwoDots(18, 22, r, g, b, sw);
+    linkConsecDots(0, 18, r, g, b, opacity, sw);
+    linkConsecDots(19, 22, r, g, b, opacity, sw);
+    linkTwoDots(0, 19, r, g, b, opacity, sw);
+    linkTwoDots(18, 22, r, g, b, opacity, sw);
     
     //Right Eye
     
-    linkConsecDots(23, 26, r, g, b, sw);
-    linkTwoDots(23, 26, r, g, b, sw);
+    linkConsecDots(23, 26, r, g, b, opacity, sw);
+    linkTwoDots(23, 26, r, g, b, opacity, sw);
     
     //Left Eye
     
-    linkConsecDots(28, 31, r, g, b, sw);
-    linkTwoDots(28, 31, r, g, b, sw);
+    linkConsecDots(28, 31, r, g, b, opacity, sw);
+    linkTwoDots(28, 31, r, g, b, opacity, sw);
     
     //Nose
     
-    linkConsecDots(33, 40, r, g, b, sw);
-    linkTwoDots(33, 40, r, g, b, sw);
-    linkTwoDots(33, 41, r, g, b, sw);
-    linkTwoDots(41, 62, r, g, b, sw);
-    linkTwoDots(42, 62, r, g, b, sw);
-    linkTwoDots(43, 62, r, g, b, sw);
-    linkTwoDots(42, 35, r, g, b, sw);
-    linkTwoDots(42, 36, r, g, b, sw);
-    linkTwoDots(43, 38, r, g, b, sw);
-    linkTwoDots(43, 39, r, g, b, sw);
+    linkConsecDots(33, 40, r, g, b, opacity, sw);
+    linkTwoDots(33, 40, r, g, b, opacity, sw);
+    linkTwoDots(33, 41, r, g, b, opacity, sw);
+    linkTwoDots(41, 62, r, g, b, opacity, sw);
+    linkTwoDots(42, 62, r, g, b, opacity, sw);
+    linkTwoDots(43, 62, r, g, b, opacity, sw);
+    linkTwoDots(42, 35, r, g, b, opacity, sw);
+    linkTwoDots(42, 36, r, g, b, opacity, sw);
+    linkTwoDots(43, 38, r, g, b, opacity, sw);
+    linkTwoDots(43, 39, r, g, b, opacity, sw);
 
     //Mouth
     
-    linkConsecDots(44, 55, r, g, b, sw);
-    linkConsecDots(56, 58, r, g, b, sw);
-    linkConsecDots(59, 61, r, g, b, sw);
-    linkTwoDots(44, 55, r, g, b, sw);
-    linkTwoDots(44, 56, r, g, b, sw);
-    linkTwoDots(44, 61, r, g, b, sw);
-    linkTwoDots(50, 58, r, g, b, sw);
-    linkTwoDots(50, 59, r, g, b, sw);
+    linkConsecDots(44, 55, r, g, b, opacity, sw);
+    linkConsecDots(56, 58, r, g, b, opacity, sw);
+    linkConsecDots(59, 61, r, g, b, opacity, sw);
+    linkTwoDots(44, 55, r, g, b, opacity, sw);
+    linkTwoDots(44, 56, r, g, b, opacity, sw);
+    linkTwoDots(44, 61, r, g, b, opacity, sw);
+    linkTwoDots(50, 58, r, g, b, opacity, sw);
+    linkTwoDots(50, 59, r, g, b, opacity, sw);
     
     //Face
     
-    linkTwoDots(19, 23, r, g, b, sw);
-    linkTwoDots(15, 28, r, g, b, sw);
-    linkTwoDots(20, 24, r, g, b, sw);
-    linkTwoDots(16, 29, r, g, b, sw);
-    linkTwoDots(21, 24, r, g, b, sw);
-    linkTwoDots(17, 29, r, g, b, sw);
-    linkTwoDots(22, 25, r, g, b, sw);
-    linkTwoDots(18, 30, r, g, b, sw);
-    linkTwoDots(22, 33, r, g, b, sw);
-    linkTwoDots(18, 33, r, g, b, sw);
-    linkTwoDots(25, 33, r, g, b, sw);
-    linkTwoDots(30, 33, r, g, b, sw);
-    linkTwoDots(25, 35, r, g, b, sw);
-    linkTwoDots(30, 39, r, g, b, sw);
-    // linkTwoDots(35, 44, r, g, b, sw);
-    // linkTwoDots(39, 50, r, g, b, sw);
-    linkTwoDots(37, 47, r, g, b, sw);
-    // linkTwoDots(37, 46, r, g, b, sw);
-    // linkTwoDots(37, 48, r, g, b, sw);
-    linkTwoDots(36, 46, r, g, b, sw);
-    linkTwoDots(38, 48, r, g, b, sw);
-    // linkTwoDots(36, 45, r, g, b, sw);
-    // linkTwoDots(38, 49, r, g, b, sw);
-    linkTwoDots(0, 23, r, g, b, sw);
-    linkTwoDots(14, 28, r, g, b, sw);
-    linkTwoDots(26, 35, r, g, b, sw);
-    linkTwoDots(31, 39, r, g, b, sw);
-    linkTwoDots(1, 35, r, g, b, sw);
-    linkTwoDots(13, 39, r, g, b, sw);
-    linkTwoDots(2, 35, r, g, b, sw);
-    linkTwoDots(12, 39, r, g, b, sw);
-    linkTwoDots(2, 45, r, g, b, sw);
-    linkTwoDots(12, 49, r, g, b, sw);
-    linkTwoDots(3, 44, r, g, b, sw);
-    linkTwoDots(11, 50, r, g, b, sw);
-    linkTwoDots(4, 44, r, g, b, sw);
-    linkTwoDots(10, 50, r, g, b, sw);
-    linkTwoDots(5, 55, r, g, b, sw);
-    linkTwoDots(9, 51, r, g, b, sw);
-    linkTwoDots(1, 26, r, g, b, sw);
-    linkTwoDots(13, 28, r, g, b, sw);
-    linkTwoDots(6, 54, r, g, b, sw);
-    linkTwoDots(8, 52, r, g, b, sw);
-    linkTwoDots(7, 53, r, g, b, sw);
+    linkTwoDots(19, 23, r, g, b, opacity, sw);
+    linkTwoDots(15, 28, r, g, b, opacity, sw);
+    linkTwoDots(20, 24, r, g, b, opacity, sw);
+    linkTwoDots(16, 29, r, g, b, opacity, sw);
+    linkTwoDots(21, 24, r, g, b, opacity, sw);
+    linkTwoDots(17, 29, r, g, b, opacity, sw);
+    linkTwoDots(22, 25, r, g, b, opacity, sw);
+    linkTwoDots(18, 30, r, g, b, opacity, sw);
+    linkTwoDots(22, 33, r, g, b, opacity, sw);
+    linkTwoDots(18, 33, r, g, b, opacity, sw);
+    linkTwoDots(25, 33, r, g, b, opacity, sw);
+    linkTwoDots(30, 33, r, g, b, opacity, sw);
+    linkTwoDots(25, 35, r, g, b, opacity, sw);
+    linkTwoDots(30, 39, r, g, b, opacity, sw);
+    // linkTwoDots(35, 44, r, g, b, opacity, sw);
+    // linkTwoDots(39, 50, r, g, b, opacity, sw);
+    linkTwoDots(37, 47, r, g, b, opacity, sw);
+    // linkTwoDots(37, 46, r, g, b, opacity, sw);
+    // linkTwoDots(37, 48, r, g, b, opacity, sw);
+    linkTwoDots(36, 46, r, g, b, opacity, sw);
+    linkTwoDots(38, 48, r, g, b, opacity, sw);
+    // linkTwoDots(36, 45, r, g, b, opacity, sw);
+    // linkTwoDots(38, 49, r, g, b, opacity, sw);
+    linkTwoDots(0, 23, r, g, b, opacity, sw);
+    linkTwoDots(14, 28, r, g, b, opacity, sw);
+    linkTwoDots(26, 35, r, g, b, opacity, sw);
+    linkTwoDots(31, 39, r, g, b, opacity, sw);
+    linkTwoDots(1, 35, r, g, b, opacity, sw);
+    linkTwoDots(13, 39, r, g, b, opacity, sw);
+    linkTwoDots(2, 35, r, g, b, opacity, sw);
+    linkTwoDots(12, 39, r, g, b, opacity, sw);
+    linkTwoDots(2, 45, r, g, b, opacity, sw);
+    linkTwoDots(12, 49, r, g, b, opacity, sw);
+    linkTwoDots(3, 44, r, g, b, opacity, sw);
+    linkTwoDots(11, 50, r, g, b, opacity, sw);
+    linkTwoDots(4, 44, r, g, b, opacity, sw);
+    linkTwoDots(10, 50, r, g, b, opacity, sw);
+    linkTwoDots(5, 55, r, g, b, opacity, sw);
+    linkTwoDots(9, 51, r, g, b, opacity, sw);
+    linkTwoDots(1, 23, r, g, b, opacity, sw);
+    linkTwoDots(13, 28, r, g, b, opacity, sw);
+    linkTwoDots(6, 54, r, g, b, opacity, sw);
+    linkTwoDots(8, 52, r, g, b, opacity, sw);
+    linkTwoDots(7, 53, r, g, b, opacity, sw);
     
     fill(r, g, b);
     noStroke();
@@ -354,19 +418,28 @@ function draw() {
 
 
 
-function linkTwoDots(dot1, dot2, r, g, b, sw) {  
-  stroke(r, g, b);
+function linkTwoDots(dot1, dot2, r, g, b, opacity, sw) {  
+  stroke(r, g, b, opacity);
   strokeWeight(sw);
   line(fPositions[dot1].x, fPositions[dot1].y, fPositions[dot2].x, fPositions[dot2].y);
 }
 
-function linkConsecDots(start, end, r, g, b, sw) {
+function linkConsecDots(start, end, r, g, b, opacity, sw) {
   
-  stroke(r, g, b);
+  stroke(r, g, b, opacity);
   strokeWeight(sw);
   for (let i = start; i < end; i++) {
     line(fPositions[i].x, fPositions[i].y, fPositions[i+1].x, fPositions[i+1].y);
+    
   }
+}
+
+function drawEllipse(dot, r, g, b, opacity, radius) {
+  
+  fill(r, g, b, opacity);
+  noStroke();
+  ellipse(fPositions[dot].x, fPositions[dot].y, radius, radius);
+  
 }
 
 function distByIndex(a, b) {
