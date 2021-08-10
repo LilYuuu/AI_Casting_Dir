@@ -228,7 +228,7 @@ class ImgRetrieval_MovieChar:
         std = df[col].std()
         df[col] = df[col].apply(lambda x: (x-mean)/std)
 
-    def find_images(self, query_embs, coe_ls, max_n=5):
+    def find_images(self, query_embs, coe_ls):
 
         df = pd.DataFrame(self.emb_score(query_embs))
 
@@ -238,8 +238,19 @@ class ImgRetrieval_MovieChar:
 
         # total score
         df['score'] = df.apply(lambda x: self.total_score(x, coe_ls), axis=1)
+
+        char_lst, scores = [], []
+        char_lst += df.nlargest(5, 'score')[0].to_list()
+        scores += df.nlargest(5, 'score')['score'].to_list()
+
+        char_lst += df.nsmallest(5, 'score')[0].to_list()
+        scores += df.nsmallest(5, 'score')['score'].to_list()
+
+        random_df = df.sample(5)
+        char_lst += random_df[0].to_list()
+        scores += random_df['score'].to_list()
         
-        return df.nlargest(max_n, 'score')[0].to_list(), df.nlargest(max_n, 'score')['score'].to_list()
+        return char_lst, scores
 
 class ScriptGPT:
 
@@ -406,7 +417,7 @@ def background_process():
     query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
 
     coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
-    results, scores = charRe.find_images(query_embs, coe_ls, max_n=5)
+    results, scores = charRe.find_images(query_embs, coe_ls)
     char_lst = ['/static/movie_char/' + fn for fn in results]
 
     coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
