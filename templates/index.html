@@ -30,9 +30,16 @@
 
 		#cv {
 			border: none;
-			height: 436px;
+			/* height: 436px; */
 			overflow: hidden;
-			width: 356px;
+			/* width: 356px; */
+			position: relative;
+			margin: 5vh;
+		}
+		#capture_button {
+			position: absolute;
+			z-index: 10;
+			margin: 1vh;
 		}
 	</style>
 </head>
@@ -42,19 +49,24 @@
 
 		<h2 class="mt-5">AI Casting Director</h2>
 
-		<form>
+		<!-- <form>
 			<a href=# id="capture_button">
 				<button type="button" style="background-color:none; border:none;">
 					<img src="../static/images/icon-camera-512.png" width="6%">
 				</button>
 			</a>
-		</form>
+		</form> -->
 
 		<figure id='hide'><img src="{{ url_for('video_feed') }}" height="50%"></figure>
 
 		<figure>
-			<div id="cv"></div>
-			<!-- <iframe allow="camera" id="p5_embedded" src='https://preview.p5js.org/tigertian98/present/yzksiz4tc'></iframe> -->
+			<div id="cv">
+				<!-- <form> -->
+					<!-- <a href=# id="capture_button"> -->
+						<input id="capture_button" type="image" src="../static/images/icon-camera-512.png" width="30vh">
+					<!-- </a>
+				</form> -->
+			</div>
 		</figure>
 
 		<p id="script" style="white-space: pre-line"><strong></strong></p>

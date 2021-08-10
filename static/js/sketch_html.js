@@ -1,5 +1,5 @@
 $(function() {
-    $('a#capture_button').on('click', function(e) {
+    $('input#capture_button').on('click', function(e) {
         e.preventDefault()
         $.getJSON('/background_process',
             function(data) {
