@@ -12,12 +12,13 @@
 	<style>
 		figure {
 			float: left;
-			text-align: center;
 		}
 
 		p {
 			padding: 20px;
-			float: left;
+			/* float: left; */
+			clear: both;
+			text-align: center;
 		}
 
 		#char {
@@ -41,13 +42,22 @@
 			z-index: 10;
 			margin: 1vh;
 		}
+
+		.rectangle {
+			height: 50px;
+			width: 5px;
+			background-color: red;
+			float:right;
+		}
+
+		.bottomImage {
+			clear: both;
+		}
 	</style>
 </head>
 
 <body>
 	<div class="container">
-
-		<h2 class="mt-5">AI Casting Director</h2>
 
 		<!-- <form>
 			<a href=# id="capture_button">
@@ -61,38 +71,40 @@
 
 		<figure>
 			<div id="cv">
-				<!-- <form> -->
-					<!-- <a href=# id="capture_button"> -->
-						<input id="capture_button" type="image" src="../static/images/icon-camera-512.png" width="30vh">
-					<!-- </a>
-				</form> -->
+				<input id="capture_button" type="image" src="../static/images/icon-camera-512.png" width="30vh">
 			</div>
 		</figure>
 
-		<p id="script" style="white-space: pre-line"><strong></strong></p>
-
+		<div id="char"></div>
 		<br>
 
-		<div id="char"></div>
+		<p id="script" style="white-space: pre-line"><strong></strong></p>
+		<br>
+		
+		<div id="bottomImage"></div>
 
 		<!-- <figure><img src="../static/movie_char/466.jpg"></figure>
 
-		<p>TEXT</p>
-
-		<div class='char'>
+		<div id='char'>
 			<figure>
 				<img src="../static/movie_char/35.jpg">
-				<figcaption>2.4345</figcaption>
+				<div class="rectangle"></div>
 			</figure>
 			<figure>
 				<img src="../static/movie_char/8.jpg">
-				<figcaption>5.5681</figcaption>
+				<div class="rectangle"></div>
 			</figure>
 			<figure>
 				<img src="../static/movie_char/46.jpg">
-				<figcaption>3.3245</figcaption>
+				<div class="rectangle"></div>
 			</figure>
-		</div> -->
+		</div>
+
+		<p id="script">TEXT</p>
+
+		<figure><img class="bottomImage" src="../static/movie_char/426.jpg"></figure>
+		<figure><img class="bottomImage" src="../static/movie_char/316.jpg"></figure> -->
+
 
 	</div>
 </body>

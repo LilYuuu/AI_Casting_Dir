@@ -239,16 +239,22 @@ class ImgRetrieval_MovieChar:
         # total score
         df['score'] = df.apply(lambda x: self.total_score(x, coe_ls), axis=1)
 
+        df = df.sort_values(by=['score'], ascending=False)
+
         char_lst, scores = [], []
-        char_lst += df.nlargest(5, 'score')[0].to_list()
-        scores += df.nlargest(5, 'score')['score'].to_list()
 
-        char_lst += df.nsmallest(5, 'score')[0].to_list()
-        scores += df.nsmallest(5, 'score')['score'].to_list()
+        temp = df.iloc[:6, :]
+        char_lst += temp[0].to_list()
+        scores += temp['score'].to_list()
 
-        random_df = df.sample(5)
-        char_lst += random_df[0].to_list()
-        scores += random_df['score'].to_list()
+        temp = df.iloc[200:-200, :].sample(5)
+        char_lst += temp[0].to_list()
+        scores += temp['score'].to_list()
+
+        temp = df.iloc[-50:, :].sample(5)
+        char_lst += temp[0].to_list()
+        scores += temp['score'].to_list()
+
         
         return char_lst, scores
 
@@ -303,7 +309,7 @@ def gen_frames():  # generate frame by frame from camera
                 capture=0
                 print(datetime.datetime.now())
                 # p = os.path.sep.join(['shots', "shot_{}.jpg".format(str(now).replace(":",''))])
-                p = 'shots/test.jpg'
+                p = 'static/shots/photo.jpg'
                 resize_frame=cv2.resize(frame, (178, 218))
                 cv2.imwrite(p, resize_frame)
                 
@@ -333,16 +339,16 @@ charRe.load_dic()
 
 script = ScriptGPT()
 
-query_embs = face.get_face_emb('shots/test.jpg')
-hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
-query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
+query_embs = face.get_face_emb('static/shots/photo.jpg')
+hair.extract_hair('static/shots/photo.jpg', 'static/shots/photo_mask.jpg', 'static/shots/photo_hair.jpg')
+query_embs.append(hair.get_hair_emb('static/shots/photo_hair.jpg'))
 
 coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
 results, scores = charRe.find_images(query_embs, coe_ls)
 print(results)
 
 fig, axs = plt.subplots(1, 6, figsize=(15, 9))
-im = plt.imread('shots/test.jpg')
+im = plt.imread('static/shots/photo.jpg')
 axs[0].imshow(im)
 for i in range(5):
     im = plt.imread('static/movie_char/' + results[i])
@@ -412,9 +418,9 @@ def background_process():
     # MACHINE LEARNING
     
     # image retrieval
-    query_embs = face.get_face_emb('shots/test.jpg')
-    hair.extract_hair('shots/test.jpg', 'shots/test_mask.jpg', 'shots/test_hair.jpg')
-    query_embs.append(hair.get_hair_emb('shots/test_hair.jpg'))
+    query_embs = face.get_face_emb('static/shots/photo.jpg')
+    hair.extract_hair('static/shots/photo.jpg', 'static/shots/photo_mask.jpg', 'static/shots/photo_hair.jpg')
+    query_embs.append(hair.get_hair_emb('static/shots/photo_hair.jpg'))
 
     coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
     results, scores = charRe.find_images(query_embs, coe_ls)
@@ -435,6 +441,7 @@ def background_process():
     result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
     
     msg = '.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.'
+    # msg = 'script'
 
     # send results to html as json file
     return jsonify(msg=msg, char_lst=char_lst, scores=scores)
