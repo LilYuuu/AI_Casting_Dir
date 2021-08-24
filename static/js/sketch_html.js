@@ -7,14 +7,14 @@ $(function() {
 
                 // random positions not to display
                 var to_hide = new Array(4), i=0;
-                // while (i<4) {
-                //     var x = Math.floor(Math.random() * 15);
-                //     if (!to_hide.includes(x)){
-                //         to_hide[i] = x
-                //         i++;
-                //     }
-                // }
-                // console.log(to_hide)
+                while (i<4) {
+                    var x = Math.floor(Math.random() * 15);
+                    if (!to_hide.includes(x)){
+                        to_hide[i] = x
+                        i++;
+                    }
+                }
+                console.log(to_hide)
                 
                 // // shuffle results order
                 // var index_arr = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14];
