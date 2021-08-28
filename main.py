@@ -243,15 +243,15 @@ class ImgRetrieval_MovieChar:
 
         char_lst, scores = [], []
 
-        temp = df.iloc[:6, :]
+        temp = df.iloc[:5, :]
         char_lst += temp[0].to_list()
         scores += temp['score'].to_list()
 
-        temp = df.iloc[200:-200, :].sample(5)
+        temp = df.iloc[200:-200, :].sample(3)
         char_lst += temp[0].to_list()
         scores += temp['score'].to_list()
 
-        temp = df.iloc[-50:, :].sample(5)
+        temp = df.iloc[-50:, :].sample(3)
         char_lst += temp[0].to_list()
         scores += temp['score'].to_list()
 
@@ -285,88 +285,18 @@ class ScriptGPT:
 ####################################
 
 def crop(frame):
+    ori_w = frame.shape[1]
+    ori_h = frame.shape[0]
+    frame=cv2.resize(frame, (int(ori_w*480/ori_h), 480))
+
     w = 178*2
     h = 218*2
     startX = int((frame.shape[1]-w)/2)
     endX = int(startX+w)
     startY = int((frame.shape[0]-h)/2)
     endY = int(startY+h)
-    try:
-        # frame = cv2.rectangle(frame, (startX, startY), (endX, endY), (255,255,255), 2)
-        frame=frame[startY:endY, startX:endX]
-    except Exception as e:
-        pass
-    return frame
-
-def gen_frames():  # generate frame by frame from camera
-    global capture
-    while True:
-        success, frame = camera.read() 
-        if success:              
-            frame= crop(frame)
-
-            if(capture):
-                capture=0
-                print(datetime.datetime.now())
-                # p = os.path.sep.join(['shots', "shot_{}.jpg".format(str(now).replace(":",''))])
-                p = 'static/shots/photo.jpg'
-                resize_frame=cv2.resize(frame, (178, 218))
-                cv2.imwrite(p, resize_frame)
-                
-            try:
-                ret, buffer = cv2.imencode('.jpg', cv2.flip(frame,1))
-                frame = buffer.tobytes()
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-            except Exception as e:
-                pass
-                
-        else:
-            pass
-
-
-
-'''
-face = DeepFace()
-
-hair = HairSeg()
-
-imgRe = ImgRetrieval()
-imgRe.load_dic()
-
-charRe = ImgRetrieval_MovieChar()
-charRe.load_dic()
-
-script = ScriptGPT()
-
-query_embs = face.get_face_emb('static/shots/photo.jpg')
-hair.extract_hair('static/shots/photo.jpg', 'static/shots/photo_mask.jpg', 'static/shots/photo_hair.jpg')
-query_embs.append(hair.get_hair_emb('static/shots/photo_hair.jpg'))
-
-coe_ls = [0.8, 0.2, 0.25, 0.02, 0.3, 1.5]
-results, scores = charRe.find_images(query_embs, coe_ls)
-print(results)
-
-fig, axs = plt.subplots(1, 6, figsize=(15, 9))
-im = plt.imread('static/shots/photo.jpg')
-axs[0].imshow(im)
-for i in range(5):
-    im = plt.imread('static/movie_char/' + results[i])
-    axs[i+1].imshow(im)
-
-plt.show()
-
-fn = results[0]
-# inputs = sum_tokenizer(imgRe.f2t_dic[fn], add_special_tokens=False, return_tensors='pt')
-input_1st_sent = imgRe.f2t_dic[fn].split('.')[0]
-inputs = script.sum_tokenizer(input_1st_sent, add_special_tokens=False, return_tensors='pt')
-
-input_ids = inputs.input_ids.to(script.device)
-bad_words_ids = [script.sum_tokenizer(bad_word).input_ids for bad_word in ["EXT.", "INT.", "CONT'D", "CUT"]]
-forced_eos_token_id = script.sum_tokenizer('.').input_ids
-result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
-print('.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.')
-'''
+    
+    return frame[startY:endY, startX:endX]
 
 
 ############ PRELOAD MODELS ###########
@@ -392,28 +322,35 @@ print('--------------')
 
 ############### FLASK ##############
 
-global capture 
-capture=0
-
 #instatiate flask app  
 app = Flask(__name__, template_folder='./templates')
-camera = cv2.VideoCapture(0)
 
 @app.route('/')
 def index():
     return render_template('index.html')
-    
-@app.route('/video_feed')
-def video_feed():
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# background process happening without any refreshing
-@app.route('/background_process')
-def background_process():
+@app.route('/capture', methods=['GET', 'POST'])
+def capture():
+    return render_template('capture.html')
+    
+@app.route('/result', methods=['GET', 'POST'])
+def result():
 
     # TAKE A PHOTO
-    global capture
-    capture=1
+    camera = cv2.VideoCapture(0)
+    success, frame = camera.read()
+
+    if success:              
+        frame= crop(frame)
+
+        p = 'static/shots/photo.jpg'
+        resize_frame=cv2.resize(frame, (178, 218))
+        cv2.imwrite(p, resize_frame)
+
+        # turn off camera
+        camera.release()
+    else:
+        print("failed to grab frame")
 
     # MACHINE LEARNING
     
@@ -441,14 +378,16 @@ def background_process():
     result = script.gpt2_movie.generate(input_ids=input_ids, no_repeat_ngram_size=2, do_sample=True, max_length=120, early_stopping=True, num_beams=10, repetition_penalty=1.2, bad_words_ids=bad_words_ids, forced_eos_token_id=forced_eos_token_id)
     
     msg = '.'.join(script.sum_tokenizer.batch_decode(result)[0].split('.')[:-2])+ '.'
-    # msg = 'script'
+    msg = msg.replace('\n', '<br>')
 
-    # send results to html as json file
-    return jsonify(msg=msg, char_lst=char_lst, scores=scores)
+    # # send results to html as json file
+    # return jsonify(msg=msg, char_lst=char_lst, scores=scores)
+
+    return render_template('result.html', msg=msg, char_lst=char_lst, scores=scores)
 
 
 if __name__ == '__main__':
     app.run()
     
-camera.release()
-cv2.destroyAllWindows()    
+# camera.release()
+# cv2.destroyAllWindows()    

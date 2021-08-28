@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Artificial Stories of the Faces</title>
+
+    <link rel= "stylesheet" type= "text/css" href= "../static/styles/result.css">
+
+    <script>
+        var scores = '{{scores}}';
+        const scoresArr = scores.split(",");
+        console.log(scoresArr)
+        document.addEventListener("DOMContentLoaded", function(){
+            for (let i=0; i<10; i++){
+                var rect = document.getElementById("img"+(i+1).toString()).getElementsByClassName('rectangle')[0];
+                // console.log(rect)
+                var h = (parseFloat(scoresArr[i+1])+9)**2/3+5;
+                // console.log(h)
+                rect.style.height = h.toString()+"%";
+                rect.style.top = (100-h).toString()+"%";
+            }
+        })
+
+    </script>
+
+</head>
+
+<body>
+	<div class="container">
+
+        <div class='left'>
+            <div class='char-container'>
+                <div class='char-grid'>
+                    {% for i in range(10) %}
+                        <div class='char' id='img{{i+1}}'>
+                            <div><img class="charimg" src="{{char_lst[i+1]}}"></div>
+                            <div class="rectangle"></div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class='right'>
+            <div class='script-container'>
+                <p><strong>
+                    {% autoescape false %}
+                    {{msg}}
+                    {% endautoescape %}
+                </strong></p>
+            </div>
+
+            <div class='result-container'>
+                <div class='result'>
+                    <div><img class="resultimg" src="static/shots/photo.jpg"></div>
+                </div>
+                <div class='result'>
+                    <div><img class="resultimg" src="{{ char_lst[0] }}"></div>
+                </div>
+            </div>
+        </div>
+	</div>
+
+    <div class="home">
+        <form action="/capture" method="POST">
+            <input id="home_button" type="image" alt="Submit Form" src="../static/images/home.png" width="30vh">
+        </form>		
+    </div>
+
+    <div class='bg_tri'></div>
+</body>

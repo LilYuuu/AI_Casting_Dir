@@ -1,0 +1,140 @@
+body {
+background-color: white;
+}
+
+.bg_tri {
+    position: absolute;
+    left: -20px;
+    bottom: -20px;
+    border-color: rgb(247, 178, 178) transparent;
+    border-width: 0px 320px 320px 0px;
+    border-style: solid;
+    z-index: -1;
+}
+
+#home_button {
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    margin: 20px;
+}
+
+.container {
+    margin: 0 auto;
+    width: 95%;
+    display: flex;
+    align-items: center;
+}
+
+.left {
+    width: 45%;
+}
+.right {
+    width: 55%;
+}
+
+.char-container {
+    position: relative;
+    /* top: -70px; */
+
+    background-image: url('../images/bg_img.png');
+    background-repeat: no-repeat;
+    /* background-attachment: fixed; */
+    background-size: 100% auto;
+}
+
+.char-grid {
+    width: 90%;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    /* grid-template-rows: 120px 120px 120px 120px; */
+    grid-gap: 3%;
+    /* display: block; */
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.char {
+    width: 90%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    /* float: left; */
+    /* margin: 10px; */
+}
+
+.charimg {
+    float: left;
+    width: 90%;
+}
+
+.rectangle {
+    /* height: 80%; */
+    width: 5px;
+    background-color: red;
+    float:left;
+    position: relative;
+}
+
+.script-container {
+    margin: 5%;
+    padding: 5%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+p {
+    /* padding: 20px; */
+    /* float: left; */
+    /* clear: both; */
+    text-align: center;
+}
+
+.result-container {
+    margin: 5%;
+    display: flex;
+}
+
+.result {
+    width: 50%;
+}
+
+.resultimg {
+    width: 90%;
+    /* margin: 5%; */
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+
+}
+
+#img5 {
+    grid-row: 2;
+    grid-column: 2;
+}
+
+#img6 {
+    grid-row: 2;
+    grid-column: 4;
+}
+
+#img7 {
+    grid-row: 3;
+    grid-column: 1;
+}
+
+#img8 {
+    grid-row: 3;
+    grid-column: 3;
+}
+
+#img9 {
+    grid-row: 3;
+    grid-column: 4;
+}
+
+#img10 {
+    grid-row: 4;
+    grid-column: 4;
+}

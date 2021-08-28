@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<title>Artificial Stories of the Faces</title>
+
+	<script src="../static/p5/p5.min.js"></script>
+	<script src="../static/js/sketch_p5.js"></script>
+	<script src="../static/js/clmtrackr.js"></script>
+	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<!-- <script src="../static/js/sketch_html.js"></script> -->
+
+	<style>
+		body {
+        background-color: black;
+		}
+
+		.container {
+			background-color: white;
+			height: 100%;
+			width: 500px;
+			position: absolute;
+			top:  50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: column
+		}
+
+		#hide {
+			display: none;
+		}
+
+		#cv {
+			border: none;
+			/* height: 436px; */
+			overflow: hidden;
+			/* width: 90%; */
+			position: relative;
+			margin: 2%;
+		}
+
+		#capture_button {
+			position: absolute;
+			z-index: 10;
+			margin: 1vh;
+		}
+
+		/* canvas {
+			width: 100%;
+			margin: 0 auto;
+		} */
+
+	</style>
+</head>
+
+<body>
+	<div class="container">
+
+		<div id="cv">
+			<form action="/result" method="POST">
+				<input id="capture_button" type="image" alt="Submit Form" src="../static/images/icon-camera-512.png" width="30vh">
+			</form>		
+		</div>
+
+
+
+	</div>
+</body>

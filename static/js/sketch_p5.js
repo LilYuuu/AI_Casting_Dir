@@ -17,13 +17,16 @@ let offset;
 let numbers;
 let nums = [0, 0, 0, 0, 0];
 
-let icon_size = 30;
+// let camera_icon;
+// let icon_size = 30;
 
 let photo_taken = false;
 let photo;
 let face_of_another;
 let time_photo_taken;
 
+let stage_2_start_time = 0;
+let stage_2_started = false;
 let interval = 40;
 let part_interval = interval // 3;
 let tint_checkpoints = [0, interval, interval * 2, interval * 3, interval * 4];
@@ -35,18 +38,22 @@ let genres = ["ROMANCE", "HORROR", "SCI-FI", "ACTION"];
 let eye_type = ["Upturned", "Downturned", "Almond", "Round"];
 let nose_type = ["Hooked", "Roman", "Button", "Funnel"];
 let mouth_type = ["Wide", "Thin", "Heart-shaped", "Full"];
+let face_type = ["Gangster", "Cowboy", "President"];
 
 let reset_face_tracking = false;
 
 let stage_3_start_time = 0;
 let stage_3_started = false;
-let stage_3_interval = 40;
-let rand_eye, rand_nose, rand_mouth;
+let stage_3_interval = 100;
+let rand_eye, rand_nose, rand_mouth, rand_face;
 
 function preload() {
 
   face_of_another = loadImage("../static/images/face_of_another.gif");
-
+  // camera_icon = loadImage("https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-camera-512.png");
+  // face_of_another = loadImage("face_of_another.gif");
+  
+  console.log("Program starts.");
 }
 
 
@@ -70,6 +77,7 @@ function setup() {
   rand_eye = random(eye_type);
   rand_nose = random(nose_type);
   rand_mouth = random(mouth_type);
+  rand_face = random(face_type);
   
 }
 
@@ -77,13 +85,15 @@ function setup() {
 function draw() {
   background(0);
   // console.log(frameCount);
-  
+    
   // Take a photo
   
   if (!photo_taken) {
     
     updateFaceTracking();
     displayFaceTracking();
+    
+    // image(camera_icon, 2, 2, 26, 26);
     
     noFill();
     stroke(255);
@@ -107,64 +117,18 @@ function draw() {
 
   } else {
     
-//     if (mouseX > w - icon_size && mouseX < w && mouseY > h - icon_size && mouseY < h && mouseIsPressed) {
-    
-//       console.log("Re-take the photo");
-//       photo_taken = false;
-
-//     }
-    
     image(photo, 0, 0);
     
-    if (frameCount < time_photo_taken + interval * genres.length) {
+    if (frameCount < time_photo_taken + stage_3_interval * 6) {
       
-      // Stage two - Genre Switching
-      
-      imageMode(CENTER);
-      tint(255, 180);
-      image(face_of_another, w / 2, h / 2 + foa_offset, foa_w, foa_h);
-      tint(255);
-      imageMode(CORNER);
-      
-      let phase_num = 0;
-      
-      for (let i = 0; i < tint_checkpoints.length; i ++) {
-        let current_time = frameCount - time_photo_taken;
-        if (current_time < tint_checkpoints[i]) {
-          
-          let r_dif = tint_r[i] - tint_r[i - 1];
-          let g_dif = tint_g[i] - tint_g[i - 1];
-          let b_dif = tint_b[i] - tint_b[i - 1];
-          let phase_percentage = (current_time - tint_checkpoints[i - 1]) / (tint_checkpoints[i] - tint_checkpoints[i - 1]);
-          
-          let new_tint_r = tint_r[i - 1] + r_dif * phase_percentage;
-          let new_tint_g = tint_g[i - 1] + g_dif * phase_percentage;
-          let new_tint_b = tint_b[i - 1] + b_dif * phase_percentage;
-          
-          tint(new_tint_r, new_tint_g, new_tint_b);
-          
-          if (current_time > tint_checkpoints[i] - part_interval && current_time < tint_checkpoints[i] + part_interval) {
-              
-            textAlign(CENTER);
-            noStroke();
-            fill(255, 127 - abs(phase_percentage * 255 - 127));
-            text(genres[i - 1], w / 2, h - genre_text_offset);
-            
-          }
-          
-          break;
-          
-        }
-      }
-    } else {
-      
+
       // Stage three - Feature Listing
       
       if (!stage_3_started) {
         stage_3_start_time = frameCount;
         stage_3_started = true;
         
-        console.log(stage_3_start_time);
+        console.log("Facial feature text animation starts. Frame count: ", stage_3_start_time);
 
       }
       
@@ -197,13 +161,14 @@ function draw() {
 
       
       noStroke();
+      textSize(12);
       fill(255, 200);
       textAlign(RIGHT);
       
       
       if (stage_3_start_time + stage_3_interval * 1 < frameCount) {
         if (stage_3_start_time + stage_3_interval * 1.5 > frameCount) {
-          text(eye_type[frameCount % eye_type.length] + " Eyes", w - feature_text_offset, fPositions[26].y);
+          text(eye_type[floor(frameCount / 3) % eye_type.length] + " Eyes", w - feature_text_offset, fPositions[26].y);
         } else {
           text(rand_eye + " Eyes", w - feature_text_offset, fPositions[26].y);
         }
@@ -211,7 +176,7 @@ function draw() {
       
       if (stage_3_start_time + stage_3_interval * 2 < frameCount) {
         if (stage_3_start_time + stage_3_interval * 2.5 > frameCount) {
-          text(nose_type[frameCount % nose_type.length] + " Nose", w - feature_text_offset, fPositions[62].y);
+          text(nose_type[floor(frameCount / 3) % nose_type.length] + " Nose", w - feature_text_offset, fPositions[62].y);
         } else {
           text(rand_nose + " Nose", w - feature_text_offset, fPositions[62].y);
         }
@@ -219,9 +184,71 @@ function draw() {
       
       if (stage_3_start_time + stage_3_interval * 3 < frameCount) {
         if (stage_3_start_time + stage_3_interval * 3.5 > frameCount) {
-          text(mouth_type[frameCount % mouth_type.length] + " Lips", w - feature_text_offset, fPositions[50].y);
+          text(mouth_type[floor(frameCount / 3) % mouth_type.length] + " Lips", w - feature_text_offset, fPositions[50].y);
         } else {
           text(rand_mouth + " Lips", w - feature_text_offset, fPositions[50].y);
+        }
+      }
+      
+      textSize(30);
+      textAlign(LEFT);
+      
+      if (stage_3_start_time + stage_3_interval * 4 < frameCount) {    
+        if (stage_3_start_time + stage_3_interval * 5 > frameCount) {
+          text(face_type[floor(frameCount / 3) % face_type.length] + " Face", feature_text_offset, h - feature_text_offset);
+        } else {
+          text(rand_face + " Face", feature_text_offset, h - feature_text_offset);
+        }
+      }
+
+
+    } else {
+
+      // Stage two - Genre Switching
+
+      if (!stage_2_started) {
+        stage_2_start_time = frameCount;
+        stage_2_started = true;
+        
+        console.log("Genre switching animation starts. Frame count: ", stage_2_start_time);
+
+      }
+      
+      imageMode(CENTER);
+      tint(255, 180);
+      image(face_of_another, w / 2, h / 2 + foa_offset, foa_w, foa_h);
+      tint(255);
+      imageMode(CORNER);
+      
+      let phase_num = 0;
+      
+      for (let i = 0; i < tint_checkpoints.length; i ++) {
+        let current_time = frameCount - stage_2_start_time;
+        if (current_time < tint_checkpoints[i]) {
+          
+          let r_dif = tint_r[i] - tint_r[i - 1];
+          let g_dif = tint_g[i] - tint_g[i - 1];
+          let b_dif = tint_b[i] - tint_b[i - 1];
+          let phase_percentage = (current_time - tint_checkpoints[i - 1]) / (tint_checkpoints[i] - tint_checkpoints[i - 1]);
+          
+          let new_tint_r = tint_r[i - 1] + r_dif * phase_percentage;
+          let new_tint_g = tint_g[i - 1] + g_dif * phase_percentage;
+          let new_tint_b = tint_b[i - 1] + b_dif * phase_percentage;
+          
+          tint(new_tint_r, new_tint_g, new_tint_b);
+          
+          if (current_time > tint_checkpoints[i] - part_interval && current_time < tint_checkpoints[i] + part_interval) {
+              
+            textAlign(CENTER);
+            noStroke();
+            textSize(15);
+            fill(255, 127 - abs(phase_percentage * 255 - 127));
+            text(genres[i - 1], w / 2, h - genre_text_offset);
+            
+          }
+          
+          break;
+          
         }
       }
     }
@@ -478,7 +505,7 @@ function setupFaceTracking() {
       height: h
     }
   }, function() {
-    console.log('capture ready.')
+    console.log('Face tracking ready.')
   });
   capture.elt.setAttribute('playsinline', '');
   //createCanvas(w, h);

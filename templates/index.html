@@ -2,109 +2,60 @@
 <html>
 
 <head>
-
-	<script src="../static/p5/p5.min.js"></script>
-	<script src="../static/js/sketch_p5.js"></script>
-	<script src="../static/js/clmtrackr.js"></script>
-	<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-	<script src="../static/js/sketch_html.js"></script>
+	<title>Artificial Stories of the Faces</title>
 
 	<style>
-		figure {
-			float: left;
+		body {
+        background-color: black;
 		}
 
-		p {
-			padding: 20px;
-			/* float: left; */
-			clear: both;
+		.container {
+			height: 100%;
+			width: 500px;
+			position: absolute;
+			top:  50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			flex-direction: column
+		}
+
+		.intro {
+			margin: 5%;
+			padding: 5%;
+			display: block;
+			margin-left: auto;
+			margin-right: auto;
+		}
+
+		h4 {
+			color: white;
 			text-align: center;
 		}
 
-		#char {
-			clear: both;
-		}
-
-		#hide {
-			display: none;
-		}
-
-		#cv {
-			border: none;
-			/* height: 436px; */
-			overflow: hidden;
-			/* width: 356px; */
-			position: relative;
-			margin: 5vh;
-		}
-		#capture_button {
-			position: absolute;
-			z-index: 10;
-			margin: 1vh;
-		}
-
-		.rectangle {
-			height: 50px;
-			width: 5px;
-			background-color: red;
-			float:right;
-		}
-
-		.bottomImage {
-			clear: both;
-		}
 	</style>
 </head>
 
 <body>
 	<div class="container">
 
-		<!-- <form>
-			<a href=# id="capture_button">
-				<button type="button" style="background-color:none; border:none;">
-					<img src="../static/images/icon-camera-512.png" width="6%">
-				</button>
-			</a>
-		</form> -->
-
-		<figure id='hide'><img src="{{ url_for('video_feed') }}" height="50%"></figure>
-
-		<figure>
-			<div id="cv">
-				<input id="capture_button" type="image" src="../static/images/icon-camera-512.png" width="30vh">
-			</div>
-		</figure>
-
-		<div id="char"></div>
-		<br>
-
-		<p id="script" style="white-space: pre-line"><strong></strong></p>
-		<br>
-		
-		<div id="bottomImage"></div>
-
-		<!-- <figure><img src="../static/movie_char/466.jpg"></figure>
-
-		<div id='char'>
-			<figure>
-				<img src="../static/movie_char/35.jpg">
-				<div class="rectangle"></div>
-			</figure>
-			<figure>
-				<img src="../static/movie_char/8.jpg">
-				<div class="rectangle"></div>
-			</figure>
-			<figure>
-				<img src="../static/movie_char/46.jpg">
-				<div class="rectangle"></div>
-			</figure>
+		<div class='intro'>
+			<h4>
+				This project 'Artificial Stories of the Faces' is an art research project.
+				Using the machine learning models, the system takes an image as an input and generates text as an output. 
+				The project/system does not save any data.
+				If you consent to have a picture taken, please click to proceed.
+			</h4>
 		</div>
 
-		<p id="script">TEXT</p>
-
-		<figure><img class="bottomImage" src="../static/movie_char/426.jpg"></figure>
-		<figure><img class="bottomImage" src="../static/movie_char/316.jpg"></figure> -->
-
+		<div class="start_button">
+			<form action="/capture" method="POST">
+				<input type="submit" value="START">
+			</form>		
+		</div>
 
 	</div>
 </body>
