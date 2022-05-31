@@ -41,9 +41,9 @@ This will start the server. Wait for a few minutes until you see "Running on htt
 
 ## Step 4: Stop / Restart
 
-* To stop the server, press <kbd>Ctrl</kdb> + <kbd>C</kdb>.
+* To stop the server, press <kbd>Ctrl</kbd> + <kbd>C</kbd>.
 
-* To restart the server, press <kbd>Ctrl</kdb> + <kbd>C</kdb> and run the main script again.
+* To restart the server, press <kbd>Ctrl</kbd> + <kbd>C</kbd> and run the main script again.
 ``` 
 python3 main.py
 ```
