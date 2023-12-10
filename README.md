@@ -5,7 +5,7 @@ Make sure you have python3 installed. If not, go to https://www.python.org/downl
 ## Step 1: Download files
 
 1. Download/clone this github repository "AI_Casting_Dir"
-2. Download models and embeddings from https://drive.google.com/file/d/1ZS3I7xaIpKluNQi7MOsj8pvQE6t-wjwb/view?usp=sharing 
+2. Download models and embeddings from https://drive.google.com/file/d/1aHZnhTvxB8SFoQxEiViLMtevg3maqTqi/view?usp=sharing 
 3. Unzip the supplement file. You should see five folders. Move them into the "AI_Casting_Dir" folder.
 
 ## Step 2: Set up the environment
